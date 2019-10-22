@@ -1,0 +1,128 @@
+//Из задачи понятно, что на этажах две кнопки с направлением (вниз,вверх)
+//Лифт подбирает пасажира по пути следования, если пассажиру в том же направлении
+//Будем считать, что лифт может поднять любой вес
+
+const int DIRECTION_DOWN = -1;
+const int DIRECTION_NONE = 0;
+const int DIRECTION_UP = 1;
+
+// Do not implement this, this is just hardware API
+class HardwareElevator
+{
+ public delegate void DoorsAction(int);
+ public delegate void FloorAction(int, int);
+
+ public event DoorsAction onDoorsClosed = delegate { };
+ public event FloorAction onBeforeFloor = delegate { };
+
+ public void moveUp() {} // Start moving elevator up
+ public void moveDown() {} // Start moving elevator down
+ public void stopAndOpenDoors() {} // Stop elevator at current floor and open doors
+ public int getCurrentFloor() {}
+ public int getCurrentDirection() {}
+}
+
+
+class Elevator {
+    private HardwareElevator hw;
+    
+    Queue<int> queueUp = new Queue<int>(); //Очередь для направления вверх
+    Queue<int> queueDown = new Queue<int>(); //Очередь для направления вниз
+    
+    public Elevator()
+    {
+        this.hw = new HardwareElevator();
+        this.hw.onDoorsClosed += this.onDoorsClosed;
+        this.hw.onBeforeFloor += this.onBeforeFloor;
+    }
+
+    private void OnDoorsClosed()
+    {
+        DefineMoveStatus(); 
+    }
+
+    private void OnBeforeFloor(int floor, int direction)
+    {
+        int currentFloor = hw.getCurrentFloor();
+ 
+        if (currentFloor + direction == floor) 
+        {
+            hw.stopAndOpenDoors();
+        }
+    }
+
+    private void FloorButtonPressed(int floor, int direction)
+    {
+        AddNewStop(floor, direction)
+    }
+    
+    private void CabinButtonPressed(int floor)
+    {
+        int currentFloor = hw.getCurrentFloor();
+
+        if (floor > currentFloor)
+        {
+            int direction = DIRECTION_UP;
+            AddNewStop(floor, direction);
+         }
+         else if (floor < currentFloor)
+         {
+            int direction = DIRECTION_UP;
+            AddNewStop(floor, direction);
+         }
+         else
+         {
+             Console.WriteLine("Уже на этаже");
+             hw.stopAndOpenDoors();
+         }
+    }
+    
+    private void AddNewStop(int floor, int direction)//Процедура добавляет этаж для остановки для каждого направления
+    {
+        int currentFloor = hw.getCurrentFloor();
+       
+        if (currentFloor == floor) 
+        {
+          hw.stopAndOpenDoors();
+        }
+ 
+        if (direction == DIRECTION_UP)
+        {
+          queueUp.Enqueue(floor);
+        }
+
+        if (direction == DIRECTION_DOWN)
+        {
+          queueDown.Enqueue(floor);
+        }
+    }
+    
+    private int GetAnotherDirection(int direction) //функция возращает противоположное направление
+    {
+        if (direction != DIRECTION_NONE)
+        {
+            if (direction == DIRECTION_UP)
+                return DIRECTION_DOWN
+            else return DIRECTION_UP
+        }
+    }
+    
+    private void DefineMoveStatus() //Процедура определяет куда дальше двигаться лифту
+    {
+        int currentDirection = hw.getCurrentDirection();
+        int anotherDirection = GetAnotherDirection(currentDirection);
+
+        if (currentDirection != DIRECTION_NONE)
+        {
+            if (currentDirection == DIRECTION_UP && queueUp.Count != 0)
+                hw.moveUp();
+            else if (anotherDirection == DIRECTION_DOWN && queueDown.Count != 0)
+                hw.moveDown();
+
+            if (currentDirection == DIRECTION_DOWN && queueUp.Count != 0)
+                hw.moveDown();
+            else if (anotherDirection == DIRECTION_UP && queueDown.Count != 0)
+                hw.moveUp();
+         }  
+      }
+}
